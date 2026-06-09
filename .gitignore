@@ -1,0 +1,15 @@
+# Environment
+.env
+firmware/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CAD
+*.f3d.lock
