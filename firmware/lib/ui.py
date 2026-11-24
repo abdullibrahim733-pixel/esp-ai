@@ -137,7 +137,7 @@ tailwind.config = { darkMode: "class", theme: { extend: {
 </main>
 
 <script>
-const PROXY = 'http://192.168.1.197:9090';
+const PROXY = '__PROXY_URL__';
 let skills = {};
 let activeSkill = 'general';
 let loading = false;

@@ -61,23 +61,31 @@ python3 upload.py
 
 ### 3. Configure `.env`
 
-Create `/firmware/.env` on the ESP32 filesystem:
+Create `/firmware/.env` on the ESP32 filesystem (see `firmware/.env.example`):
 
 ```
 WIFI_SSID=YourSSID
 WIFI_PASSWORD=YourPassword
-OLLAMA_API_KEY=ollama_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 OLLAMA_MODEL=gemma3:4b
 PROXY_HOST=192.168.1.x
 PROXY_PORT=9090
 ```
 
+Do **not** put `OLLAMA_API_KEY` on the device. The key belongs only on the host machine running `proxy.py`; the ESP32 and the browser never receive it. `PROXY_HOST` and `PROXY_PORT` are injected into the UI automatically when the device serves the page (the `__PROXY_URL__` placeholder in `firmware/lib/ui.py` is replaced at serve time), so set them here only.
+
 ### 4. Start the proxy on the host machine
 
 ```bash
 cd esp-ai
-OLLAMA_API_KEY="ollama_..." OLLAMA_MODEL="gemma3:4b" python3 proxy.py
+OLLAMA_API_KEY="ollama_..." \
+ALLOWED_ORIGINS="http://192.168.1.x" \
+RATE_LIMIT_PER_MIN=20 \
+OLLAMA_MODEL="gemma3:4b" python3 proxy.py
 ```
+
+- `OLLAMA_API_KEY` (required) — the Ollama API key, read only by `proxy.py` on the host.
+- `ALLOWED_ORIGINS` — comma-separated list of browser origins allowed to call the proxy, e.g. the ESP32 UI address `http://192.168.1.x`. Use the exact scheme, host and port the browser shows. Requests with a missing or unlisted `Origin` are rejected with HTTP 403, and only allowed origins are echoed in CORS headers.
+- `RATE_LIMIT_PER_MIN` (optional, default `20`) — maximum chat requests per client IP per minute; excess requests get HTTP 429. Messages over 4000 characters are rejected with HTTP 413.
 
 The proxy runs on port 9090, forwarding chat requests to `ollama.com/v1`.
 

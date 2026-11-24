@@ -25,7 +25,6 @@ def load_env():
     conf = {
         "WIFI_SSID": "",
         "WIFI_PASSWORD": "",
-        "OLLAMA_API_KEY": "",
         "OLLAMA_MODEL": "llama3.2",
         "OLLAMA_BASE_URL": "https://ollama.com/v1",
         "PROXY_HOST": "192.168.1.197",
@@ -51,6 +50,10 @@ class Server:
         self.ollama = OllamaClient(
             self.cfg.get("PROXY_HOST", "192.168.1.197"),
             int(self.cfg.get("PROXY_PORT", "9090")),
+        )
+        self.proxy_url = "http://%s:%s" % (
+            self.cfg.get("PROXY_HOST", "192.168.1.197"),
+            self.cfg.get("PROXY_PORT", "9090"),
         )
         self.active_skill = "general"
         self.ip = ""
@@ -104,7 +107,7 @@ class Server:
         if isinstance(body, str):
             body = body.encode()
         blen = len(body)
-        resp = "HTTP/1.1 %d %s\r\nContent-Type: %s\r\nContent-Length: %d\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n" % (code, msg, ctype, blen)
+        resp = "HTTP/1.1 %d %s\r\nContent-Type: %s\r\nContent-Length: %d\r\nConnection: close\r\n\r\n" % (code, msg, ctype, blen)
         resp = resp.encode() + body
         try:
             client.send(resp)
@@ -152,7 +155,8 @@ class Server:
             if not method:
                 return
             if path == "/" and method == "GET":
-                self._send(client, 200, "text/html", PAGE_HTML)
+                page = PAGE_HTML.replace("__PROXY_URL__", self.proxy_url)
+                self._send(client, 200, "text/html", page)
             elif path == "/api/chat" and method == "POST":
                 self._api_chat(client, body)
             elif path == "/api/display" and method == "POST":
